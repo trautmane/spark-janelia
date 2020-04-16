@@ -295,19 +295,25 @@ def launchAndWait():
         jobID = launchall(args.hard_runtime)
     else:
         jobID  = launch(args.hard_runtime)
+
     master = None     
+    sleep_seconds = 10
     while master is None:
         master = getmasterbyjobID(jobID)
         if master is not None:
             break
-        time.sleep(60) # wait 60 seconds to avoid spamming the cluster
+        time.sleep(sleep_seconds)
+        sleep_seconds = sleep_seconds * 2 if sleep_seconds < 40 else 60 # increase wait up to 60 seconds to avoid spamming the cluster
         sys.stdout.write('.')
         sys.stdout.flush()
     os.environ["MASTER"] = "spark://{}:7077".format(master)
+
+    sleep_seconds = 10
     if args.unified == False:
         enoughworkers = False
         while enoughworkers == False:
-            time.sleep(60)
+            time.sleep(sleep_seconds)
+            sleep_seconds = sleep_seconds * 2 if sleep_seconds < 40 else 60 # increase wait up to 60 seconds to avoid spamming the cluster
             workerlist = getworkersbymasterID(jobID)
             rworkercount = len([worker for worker in  workerlist if worker['status'] == 'RUN'])
             if rworkercount is None: 
